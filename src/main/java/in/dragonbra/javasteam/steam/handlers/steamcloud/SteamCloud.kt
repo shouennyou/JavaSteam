@@ -14,6 +14,7 @@ import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesCloudSteamcli
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesCloudSteamclient.CCloud_BeginAppUploadBatch_Request
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesCloudSteamclient.CCloud_ClientBeginFileUpload_Request
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesCloudSteamclient.CCloud_ClientCommitFileUpload_Request
+import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesCloudSteamclient.CCloud_ClientDeleteFile_Request
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesCloudSteamclient.CCloud_ClientFileDownload_Request
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesCloudSteamclient.CCloud_CompleteAppUploadBatch_Request
 import `in`.dragonbra.javasteam.protobufs.steamclient.SteammessagesCloudSteamclient.CCloud_ExternalStorageTransferReport_Notification
@@ -319,6 +320,34 @@ class SteamCloud : ClientMsgHandler() {
 
         val response = cloudService.clientCommitFileUpload(request.build()).await()
         response.body.fileCommitted
+    }
+
+    /**
+     * 将指定云端文件作为显式删除操作提交到上传批次.
+     * 必须在 [beginAppUploadBatch] 后、[completeAppUploadBatch] 前为每个待删除文件调用一次.
+     *
+     * @param appId 应用 ID.
+     * @param filename 包含路径前缀的云端文件名.
+     * @param isExplicitDelete 是否明确删除文件.
+     * @param uploadBatchId 所属上传批次 ID.
+     */
+    @JavaSteamAddition
+    @JvmOverloads
+    fun clientDeleteFile(
+        appId: Int,
+        filename: String,
+        isExplicitDelete: Boolean = true,
+        uploadBatchId: Long,
+        parentScope: CoroutineScope = CoroutineScope(Dispatchers.IO),
+    ): CompletableFuture<Unit> = parentScope.future {
+        val request = CCloud_ClientDeleteFile_Request.newBuilder().apply {
+            this.appid = appId
+            this.filename = filename
+            this.isExplicitDelete = isExplicitDelete
+            this.uploadBatchId = uploadBatchId
+        }
+
+        cloudService.clientDeleteFile(request.build()).await()
     }
 
     /**
